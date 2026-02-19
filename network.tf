@@ -1,10 +1,16 @@
+# VPC 
 resource "aws_vpc" "utc_vpc" {
   cidr_block = "10.10.0.0/16"
   region = "us-east-1"
   instance_tenancy = "default"
   enable_dns_hostnames = true
   enable_dns_support = true
+  tags = { Name = "utc-vpc"}
 }
+
+# SUBNETS 
+
+# Private Subnets 6 for 3 AZs (2 per AZ)
 resource "aws_subnet" "private1" {
   vpc_id     = aws_vpc.utc_vpc.id
   cidr_block = "10.10.1.0/24"
@@ -54,6 +60,8 @@ resource "aws_subnet" "private6" {
     Name = "subnet_private6"
   }
 }
+
+# Public Subnets 3 for the 3 AZs 
 resource "aws_subnet" "public1" {
   vpc_id     = aws_vpc.utc_vpc.id
   cidr_block = "10.10.7.0/24"
@@ -81,14 +89,13 @@ resource "aws_subnet" "public3" {
     Name = "subnet_public3"
   }
 }
-#create EIP
-resource "aws_eip" "utc-eip-1" {
-}
-resource "aws_eip" "utc-eip-2" {
-}
-resource "aws_eip" "utc-eip-3" {
-}
-#create NAT gateway
+
+# create EIP 3 (One per AZ)
+resource "aws_eip" "utc-eip-1" {}
+resource "aws_eip" "utc-eip-2" {}
+resource "aws_eip" "utc-eip-3" {}
+
+# create NAT gateway
 resource "aws_nat_gateway" "NAT1" {
   allocation_id = aws_eip.utc-eip-1.id
   subnet_id     = aws_subnet.public1.id
@@ -102,6 +109,7 @@ resource "aws_nat_gateway" "NAT3" {
   allocation_id = aws_eip.utc-eip-3.id
   subnet_id     = aws_subnet.public3.id
 }
+
  #create iGW
 resource "aws_internet_gateway" "utc-igw" {
   vpc_id = aws_vpc.utc_vpc.id
@@ -115,7 +123,8 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.utc-igw.id
   }
 }
-# Private Route Tables - 2 needed for the NAT gateways
+
+# Private Route Tables - 3 needed for the NAT gateways
 resource "aws_route_table" "private_1" {
   vpc_id = aws_vpc.utc_vpc.id
   route {
@@ -123,7 +132,6 @@ resource "aws_route_table" "private_1" {
     nat_gateway_id = aws_nat_gateway.NAT1.id
   }
 }
-
 resource "aws_route_table" "private_2" {
   vpc_id = aws_vpc.utc_vpc.id
   route {
@@ -138,7 +146,10 @@ resource "aws_route_table" "private_3" {
     nat_gateway_id = aws_nat_gateway.NAT3.id
   }
 }
+
 # Route Table Associations
+
+# Public route tables ( for the 3 public subnets)
 resource "aws_route_table_association" "public_1" {
   subnet_id      = aws_subnet.public1.id
   route_table_id = aws_route_table.public.id
@@ -151,6 +162,8 @@ resource "aws_route_table_association" "public_3" {
   subnet_id      = aws_subnet.public3.id
   route_table_id = aws_route_table.public.id
 }
+
+# Private route tables ( for the 6 private subnets )
 resource "aws_route_table_association" "private_1" {
   subnet_id      = aws_subnet.private1.id
   route_table_id = aws_route_table.private_1.id
@@ -175,3 +188,4 @@ resource "aws_route_table_association" "private_6" {
   subnet_id      = aws_subnet.private6.id
   route_table_id = aws_route_table.private_3.id
 }
+
