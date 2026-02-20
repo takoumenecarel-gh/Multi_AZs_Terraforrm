@@ -16,3 +16,11 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
       - run: terraform init        
       - run: terraform apply -auto-approve
+        
+      - name: Upload Private Key
+        uses: actions/upload-artifact@v4
+        with:
+            name: private-key
+            # Terraform creates the file in the working directory !
+            path: ./keypair/*.pem
+            retention days: 2
