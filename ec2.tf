@@ -5,8 +5,7 @@ resource "aws_instance" "bastion_host" {
   subnet_id              = aws_subnet.public1.id
   vpc_security_group_ids = [aws_security_group.bastion_sg.id]
   key_name               = aws_key_pair.utc_key.key_name
-  associate_public_ip_address = true
-  #availability_zone = "us-east-1a"
+  
 
   tags = {
     Name = "dev-bastion-host"
@@ -22,7 +21,6 @@ resource "aws_instance" "app_server1" {
   subnet_id = aws_subnet.private1.id
   vpc_security_group_ids = [ aws_security_group.app_sg.id ]
   key_name = aws_key_pair.utc_key.key_name
-  associate_public_ip_address = false 
   user_data = file("${path.module}/user.sh")
   
   
@@ -38,7 +36,6 @@ resource "aws_instance" "app_server2" {
   subnet_id = aws_subnet.private2.id
   vpc_security_group_ids = [ aws_security_group.app_sg.id ]
   key_name = aws_key_pair.utc_key.key_name
-  associate_public_ip_address = false 
   user_data = file("${path.module}/user.sh")
   
   tags = {
